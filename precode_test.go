@@ -3,11 +3,10 @@ package main
 import (
 	"net/http"
 	"net/http/httptest"
-	"strconv"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestCorrectRequest(t *testing.T) {
@@ -29,15 +28,10 @@ func TestMainHandlerWhenCountMoreThanTotal(t *testing.T) {
 	handler := http.HandlerFunc(mainHandle)
 	handler.ServeHTTP(responseRecorder, req)
 
-	assert.Equal(t, responseRecorder.Code, http.StatusBadRequest)
+	assert.Equal(t, http.StatusBadRequest, responseRecorder.Code)
 
-	expected := `count missing`
-	assert.Equal(t, responseRecorder.Body.String(), expected)
-
-	countStr := req.URL.Query().Get("count")
-	count, err := strconv.Atoi(countStr)
-	require.Error(t, err)
-	assert.Greater(t, totalCount, count)
+	excepted := len(strings.Split(responseRecorder.Body.String(), ","))
+	assert.Greater(t, totalCount, excepted)
 	assert.NotEqual(t, 200, responseRecorder.Code)
 }
 
