@@ -11,14 +11,14 @@ import (
 )
 
 func TestCorrectRequest(t *testing.T) {
-	req := httptest.NewRequest("GET", "/cafe?city=moscow", nil)
+	req := httptest.NewRequest("GET", "/cafe?count=4&city=moscow", nil)
 
 	responseRecoder := httptest.NewRecorder()
 	handler := http.HandlerFunc(mainHandle)
 	handler.ServeHTTP(responseRecoder, req)
 
 	assert.Equal(t, 200, responseRecoder.Code)
-	assert.Empty(t, responseRecoder.Body)
+	assert.NotEmpty(t, responseRecoder.Body)
 }
 
 func TestMainHandlerWhenCountMoreThanTotal(t *testing.T) {
@@ -29,18 +29,16 @@ func TestMainHandlerWhenCountMoreThanTotal(t *testing.T) {
 	handler := http.HandlerFunc(mainHandle)
 	handler.ServeHTTP(responseRecorder, req)
 
-	status := responseRecorder.Code
-
-	assert.NotEqual(t, status, http.StatusBadRequest)
+	assert.Equal(t, responseRecorder.Code, http.StatusBadRequest)
 
 	expected := `count missing`
-	assert.NotEqual(t, responseRecorder.Body.String(), expected)
+	assert.Equal(t, responseRecorder.Body.String(), expected)
 
 	countStr := req.URL.Query().Get("count")
 	count, err := strconv.Atoi(countStr)
-	require.NoError(t, err)
-	assert.Greater(t, count, totalCount)
-	assert.Equal(t, 200, responseRecorder.Code)
+	require.Error(t, err)
+	assert.Greater(t, totalCount, count)
+	assert.NotEqual(t, 200, responseRecorder.Code)
 }
 
 func TestMainHandlerWhenWrongCityValue(t *testing.T) {
